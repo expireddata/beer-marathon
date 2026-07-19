@@ -4,8 +4,19 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Beer Marathon · 22 August 2026</title>
-<meta name="description" content="A 42.2 km running route through the Tyne Valley with 8 pub stops, from Hexham to Walbottle. See the route and plan your day.">
+<meta name="description" content="A 42.3 km running route through the Tyne Valley with 8 pub stops, from Hexham to Walbottle. See the route and plan your day.">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🍺</text></svg>">
+<link rel="canonical" href="https://beermarathon.run/">
+
+<!-- Social share card -->
+<meta property="og:type" content="website">
+<meta property="og:title" content="Beer Marathon · Saturday 22 August 2026">
+<meta property="og:description" content="42.3 km on foot from Hexham to Walbottle, pausing for a pint at eight pubs along the way. The route, and the plan.">
+<meta property="og:url" content="https://beermarathon.run/">
+<meta property="og:image" content="https://beermarathon.run/og-image.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
 
 <!-- Leaflet map library -->
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
@@ -22,6 +33,7 @@
     --amber:#d98a1f; --amber-deep:#a9660f; --gold:#f0b94a;
     --cream:#fbf3e3; --card:#fffaf0; --ink:#2c2213; --muted:#6f6250;
     --line:#ead9b8; --green:#4f7a3a; --red:#c1462b; --shadow:0 6px 22px rgba(60,40,10,.10);
+    --warn-bg:#fdecdc; --warn-line:#f0c8a4; --warn-ink:#8a4a12;
   }
   *{box-sizing:border-box}
   html{scroll-behavior:smooth}
@@ -45,6 +57,16 @@
   .date-badge{margin-top:22px; display:inline-flex; align-items:center; gap:10px;
     font-weight:700; font-size:17px; background:var(--ink); color:var(--gold);
     padding:11px 20px; border-radius:12px; box-shadow:var(--shadow)}
+  .count{margin-top:12px; font-weight:600; color:var(--amber-deep); font-size:15px}
+  .actions{display:flex; gap:10px; justify-content:center; flex-wrap:wrap; margin-top:14px}
+
+  .btn{display:inline-flex; align-items:center; gap:7px; font:inherit; font-weight:600; font-size:14px;
+    color:#fff; background:var(--amber); border:1px solid var(--amber-deep);
+    padding:9px 16px; border-radius:10px; cursor:pointer; text-decoration:none; box-shadow:var(--shadow)}
+  .btn:hover{background:var(--amber-deep)}
+  .btn.ghost{background:transparent; color:var(--amber-deep); border:1px solid var(--line); box-shadow:none}
+  .btn.ghost:hover{background:#fff2d0}
+  .btn.small{padding:6px 12px; font-size:13px}
 
   /* ---- Stat strip ---- */
   .stats{display:grid; grid-template-columns:repeat(4,1fr); gap:14px; margin:34px 0 8px}
@@ -55,9 +77,16 @@
   @media(max-width:620px){.stats{grid-template-columns:repeat(2,1fr)}}
 
   section{margin:46px 0}
-  .sec-head{display:flex; align-items:baseline; gap:12px; margin-bottom:16px}
+  .sec-head{display:flex; align-items:baseline; gap:12px; margin-bottom:16px; flex-wrap:wrap}
   .sec-head h2{font-size:clamp(24px,4vw,34px)}
   .sec-head .hint{color:var(--muted); font-size:14px}
+
+  /* ---- Units toggle ---- */
+  .unit-toggle{margin-left:auto; display:inline-flex; border:1px solid var(--line); border-radius:999px;
+    overflow:hidden; background:var(--card)}
+  .unit-toggle button{font:inherit; font-size:13px; font-weight:600; border:0; background:transparent;
+    color:var(--muted); padding:5px 14px; cursor:pointer}
+  .unit-toggle button.on{background:var(--amber); color:#fff}
 
   /* ---- Map ---- */
   #map{height:min(70vh,560px); border-radius:18px; border:1px solid var(--line);
@@ -79,6 +108,27 @@
   .pop-link{display:inline-block; margin-top:8px; font-weight:600; text-decoration:none;
     background:var(--amber); color:#fff; padding:5px 11px; border-radius:8px}
 
+  .map-tools{display:flex; gap:10px; margin-top:14px; flex-wrap:wrap; align-items:center}
+
+  /* ---- On-the-day tracker ---- */
+  .track-panel{display:none; margin-top:14px; background:var(--card); border:1px solid var(--line);
+    border-radius:16px; padding:18px 20px; box-shadow:var(--shadow)}
+  .track-panel.on{display:block}
+  .track-grid{display:flex; flex-wrap:wrap; gap:10px 30px}
+  .track-grid div{font-size:14px; color:var(--muted)}
+  .track-grid b{font-family:'Fraunces',serif; font-size:19px; color:var(--ink); display:block}
+  .track-note{margin-top:10px; font-size:13px; color:var(--muted)}
+  .track-status{font-weight:600; color:var(--amber-deep); font-size:14px; margin-bottom:10px}
+  .me-dot{width:18px; height:18px; border-radius:50%; background:#2b6cb0; border:3px solid #fff;
+    box-shadow:0 0 0 0 rgba(43,108,176,.5); animation:pulse 2s infinite}
+  @keyframes pulse{0%{box-shadow:0 0 0 0 rgba(43,108,176,.45)} 70%{box-shadow:0 0 0 16px rgba(43,108,176,0)} 100%{box-shadow:0 0 0 0 rgba(43,108,176,0)}}
+
+  /* ---- Elevation ---- */
+  .elev-box{margin-top:14px; background:var(--card); border:1px solid var(--line); border-radius:16px;
+    padding:16px 14px 8px; box-shadow:var(--shadow)}
+  .elev-box svg{display:block; width:100%}
+  .elev-cap{font-size:13px; color:var(--muted); margin:6px 4px 6px}
+
   /* ---- Planner ---- */
   .planner{background:var(--card); border:1px solid var(--line); border-radius:18px;
     padding:22px; box-shadow:var(--shadow)}
@@ -89,9 +139,13 @@
   .ctrl input[type=range]{width:100%; accent-color:var(--amber)}
   .ctrl input[type=time]{font:inherit; font-size:17px; padding:8px 10px; border:1px solid var(--line);
     border-radius:10px; background:#fff; width:100%}
-  .summary{display:flex; flex-wrap:wrap; gap:10px 26px; margin-top:18px; padding-top:18px; border-top:1px dashed var(--line)}
+  .summary{display:flex; flex-wrap:wrap; gap:10px 26px; margin-top:18px; padding-top:18px; border-top:1px dashed var(--line); align-items:center}
   .summary div{font-size:14px; color:var(--muted)}
   .summary b{font-family:'Fraunces',serif; font-size:19px; color:var(--ink); display:block}
+  .summary .btn{margin-left:auto}
+  .warn-list{margin-top:14px; display:flex; flex-direction:column; gap:8px}
+  .warn{background:var(--warn-bg); border:1px solid var(--warn-line); color:var(--warn-ink);
+    padding:10px 14px; border-radius:10px; font-size:14px; line-height:1.45}
 
   /* ---- Itinerary ---- */
   .legs{display:flex; flex-direction:column; gap:0; position:relative}
@@ -107,11 +161,14 @@
   .chip{font-size:12.5px; font-weight:600; padding:4px 10px; border-radius:999px;
     background:#fff2d0; border:1px solid var(--line); color:var(--amber-deep)}
   .chip.time{background:var(--ink); color:var(--gold); border-color:var(--ink)}
+  .chip.time.warn{background:var(--red); color:#fff; border-color:var(--red)}
   .chip.leg-dist{background:#eef5e8; color:var(--green); border-color:#d5e6c6}
+  .chip.opens{background:transparent; color:var(--muted)}
   .note{font-size:14px; color:var(--muted); font-style:italic; margin:6px 0 8px}
   .visit{display:inline-flex; align-items:center; gap:6px; text-decoration:none; font-weight:600; font-size:14px;
     color:var(--amber-deep)}
   .visit:hover{text-decoration:underline}
+  .foot-note{font-size:13px; color:var(--muted); margin-top:14px}
 
   .callout{background:linear-gradient(180deg,#fff7e2,#fdeecb); border:1px solid var(--line);
     border-radius:16px; padding:20px 22px; font-size:15px; line-height:1.55}
@@ -121,11 +178,29 @@
   footer a{color:var(--amber-deep)}
 
   @media (prefers-color-scheme: dark){
-    :root{--cream:#1c1710; --card:#251e14; --ink:#f3e9d6; --muted:#b3a488; --line:#3d3020}
+    :root{--cream:#1c1710; --card:#251e14; --ink:#f3e9d6; --muted:#b3a488; --line:#3d3020;
+      --warn-bg:#3a2413; --warn-line:#5c3a1c; --warn-ink:#f0c090}
     body{background-image:radial-gradient(1200px 500px at 80% -10%, #4a350f66, transparent 60%)}
     .kicker{background:#2e2415}
     .ctrl input[type=time],.leaflet-popup-content-wrapper{background:#2b2318; color:var(--ink)}
     .chip{background:#33291a}
+    .btn.ghost:hover{background:#33291a}
+    .callout{background:linear-gradient(180deg,#2b2214,#251d10)}
+  }
+
+  /* ---- Print: a pocket itinerary ---- */
+  @media print{
+    body{background:#fff !important; color:#000}
+    .actions,.map-tools,.unit-toggle,.controls,.summary .btn,#map,.track-panel,.elev-box,
+    .visit,.count{display:none !important}
+    header.hero{padding:10px 0 0}
+    h1{font-size:34px; margin:6px 0 2px}
+    .stats{margin:14px 0 0}
+    .stat,.planner,.badge,.date-badge{box-shadow:none}
+    section{margin:18px 0}
+    .leg{padding:8px 0; page-break-inside:avoid}
+    .chip.time{background:#000; color:#fff}
+    footer{margin:18px 0 0}
   }
 </style>
 </head>
@@ -135,14 +210,19 @@
   <header class="hero">
     <span class="kicker">Tyne Valley · 8 Pubs · 1 Very Long Afternoon</span>
     <h1>Beer <span class="beer">🍺</span> Marathon</h1>
-    <p class="tagline">42.2&nbsp;km on foot from Hexham to Walbottle, pausing for a pint at eight pubs along the way. Here's the route, and the plan.</p>
+    <p class="tagline">42.3&nbsp;km on foot from Hexham to Walbottle, pausing for a pint at eight pubs along the way. Here's the route, and the plan.</p>
     <div class="date-badge">📅 Saturday 22 August 2026</div>
+    <div class="count" id="countdown"></div>
+    <div class="actions">
+      <button class="btn ghost" id="icsBtn">📅 Add to calendar</button>
+      <button class="btn ghost" id="gpxBtn">⬇ GPX for your watch</button>
+    </div>
 
     <div class="stats">
-      <div class="stat"><div class="num">42.2</div><div class="lbl">Kilometres</div></div>
+      <div class="stat"><div class="num">42.3</div><div class="lbl">Kilometres</div></div>
       <div class="stat"><div class="num">8</div><div class="lbl">Pub stops</div></div>
-      <div class="stat"><div class="num">759 m</div><div class="lbl">Total climb</div></div>
-      <div class="stat"><div class="num">26.2</div><div class="lbl">Miles</div></div>
+      <div class="stat"><div class="num">640 m</div><div class="lbl">Total climb</div></div>
+      <div class="stat"><div class="num">26.3</div><div class="lbl">Miles</div></div>
     </div>
   </header>
 
@@ -150,8 +230,31 @@
     <div class="sec-head">
       <h2>The route</h2>
       <span class="hint">Tap any pin for pub details · point-to-point, Hexham → Walbottle</span>
+      <div class="unit-toggle" role="group" aria-label="Distance units">
+        <button data-u="km" class="on">km</button><button data-u="mi">mi</button>
+      </div>
     </div>
     <div id="map"></div>
+
+    <div class="map-tools">
+      <button class="btn" id="trackBtn">📍 On the day: track me</button>
+      <span class="hint" id="trackHint">Live position, distance to the next pub, and how you're doing against the plan.</span>
+    </div>
+    <div class="track-panel" id="trackPanel">
+      <div class="track-status" id="trkStatus">Waiting for GPS…</div>
+      <div class="track-grid">
+        <div>Distance done<b id="trkDone">—</b></div>
+        <div>To go<b id="trkLeft">—</b></div>
+        <div>Next stop<b id="trkNext">—</b></div>
+        <div>Versus the plan<b id="trkPlan">—</b></div>
+      </div>
+      <div class="track-note" id="trkNote"></div>
+    </div>
+
+    <div class="elev-box" id="elevBox">
+      <div id="elevChart"></div>
+      <div class="elev-cap">The hills: ~640&nbsp;m of climbing in all. The spike after pub 5 is the pull up to Horsley 😅 <span style="opacity:.7">· elevation from EU-DEM 25&nbsp;m</span></div>
+    </div>
   </section>
 
   <section id="plan">
@@ -167,7 +270,7 @@
         </div>
         <div class="ctrl">
           <label>Running pace <b id="paceVal"></b></label>
-          <input id="pace" type="range" min="5" max="10" step="0.25" value="6.5">
+          <input id="pace" type="range" min="5" max="12" step="0.25" value="6.5">
         </div>
         <div class="ctrl">
           <label>Time at each pub <b id="stopVal"></b></label>
@@ -179,7 +282,9 @@
         <div>Last pint at<b id="sumFinish">—</b></div>
         <div>Total day<b id="sumTotal">—</b></div>
         <div>Running only<b id="sumRun">—</b></div>
+        <button class="btn ghost small" id="shareBtn">🔗 Copy link to this plan</button>
       </div>
+      <div class="warn-list" id="warnings"></div>
     </div>
   </section>
 
@@ -189,11 +294,12 @@
       <span class="hint">Eight stops, roughly 5 km apart</span>
     </div>
     <div class="legs" id="legs"></div>
+    <p class="foot-note">* Opening hours unconfirmed — worth checking nearer the day.</p>
   </section>
 
   <section>
     <div class="callout">
-      <b>How it works.</b> Start at Hexham railway station and run the Tyne Valley eastward, stopping at each pub for a pint before pressing on. The pubs don't open until around midday, so the default 11:00 start brings you to the first stop, The Pele in Corbridge, just as the doors open. The legs get shorter in the middle and there's a cheeky climb up to Horsley, the shortest leg on paper (3&nbsp;km) but the one that'll hurt&nbsp;😅. Finish line is a well-earned pint at The Engine Inn, Walbottle. Sensible drinking, sensible shoes, and a plan for getting home afterwards!
+      <b>How it works.</b> Start at Hexham railway station and run the Tyne Valley eastward, stopping at each pub for a pint before pressing on. Most of the pubs open at midday (The Pele and The Wellington from 11:00), so the default 11:00 start brings you to the first stop just before noon. The legs get shorter in the middle and there's a cheeky climb up to Horsley, the shortest leg on paper (3.2&nbsp;km) but the one that'll hurt&nbsp;😅. Finish line is a well-earned pint at The Engine Inn, Walbottle. Sensible drinking, sensible shoes, and a plan for getting home afterwards!
     </div>
   </section>
 
@@ -207,20 +313,62 @@
 
 <script src="route.js"></script>
 <script>
-/* ---- Stops: from Hexham station east to Walbottle. cum = distance from start (km). ---- */
+/* ================= Data ================= */
+/* Legs recomputed from the GPS track (haversine); they sum to the 42.3 km total.
+   ri = index of the stop's nearest point in ROUTE (used for live tracking).
+   opens = Saturday opening time in minutes from midnight; unconf = hours not verified. */
 const STOPS = [
-  {n:"S", type:"start",  name:"Hexham Railway Station", area:"Hexham, the start line", lat:54.97308, lng:-2.09511, leg:0,   cum:0,    url:null},
-  {n:1,   type:"stop",   name:"The Pele",             area:"Corbridge",              lat:54.974233, lng:-2.019478, leg:8.0, cum:8.0,  url:"https://www.thepele.co.uk/"},
-  {n:2,   type:"stop",   name:"The Wellington",       area:"Riding Mill",            lat:54.947651, lng:-1.972883, leg:5.3, cum:13.3, url:"https://www.chefandbrewer.com/pubs/northumberland/wellington-hotel"},
-  {n:3,   type:"stop",   name:"Tyne Valley Taproom",  area:"Stocksfield",            lat:54.950624, lng:-1.917200, leg:5.9, cum:19.2, url:"https://www.instagram.com/tynevalleytap/"},
-  {n:4,   type:"stop",   name:"White Swan",           area:"Ovingham",               lat:54.968534, lng:-1.867247, leg:4.5, cum:23.7, url:"https://www.thewhiteswanovingham.co.uk/"},
-  {n:5,   type:"stop",   name:"The Ship Inn",         area:"Wylam",                  lat:54.976062, lng:-1.823602, leg:4.0, cum:27.7, url:"https://www.theshipinnwylam.com/dev1/bar"},
-  {n:6,   type:"stop",   name:"Lion & Lamb",          area:"Horsley",                lat:54.988301, lng:-1.855316, leg:3.0, cum:30.7, url:"https://www.lionlamb.pub/", note:"The short-but-brutal one, a stiff climb up from the river 😅"},
-  {n:7,   type:"stop",   name:"The Three Tuns Inn",   area:"Heddon-on-the-Wall",     lat:54.997461, lng:-1.793666, leg:6.2, cum:36.9, url:"https://thethreetunsinnpub.co.uk/"},
-  {n:8,   type:"finish", name:"The Engine Inn",       area:"Walbottle, the finish", lat:54.994010, lng:-1.738350, leg:5.0, cum:41.9, url:"https://www.engineinnwalbottle.co.uk/", note:"🏁 The finish line. You made it; get the round in."}
+  {n:"S", type:"start",  name:"Hexham Railway Station", area:"Hexham, the start line", lat:54.97308, lng:-2.09511, leg:0,   cum:0,    ri:0,    opens:null, url:null},
+  {n:1,   type:"stop",   name:"The Pele",             area:"Corbridge",              lat:54.974233, lng:-2.019478, leg:8.2, cum:8.2,  ri:201,  opens:660, url:"https://www.thepele.co.uk/"},
+  {n:2,   type:"stop",   name:"The Wellington",       area:"Riding Mill",            lat:54.947651, lng:-1.972883, leg:5.2, cum:13.4, ri:333,  opens:660, url:"https://www.chefandbrewer.com/pubs/northumberland/wellington-hotel"},
+  {n:3,   type:"stop",   name:"Tyne Valley Taproom",  area:"Stocksfield",            lat:54.950624, lng:-1.917200, leg:5.9, cum:19.3, ri:493,  opens:720, unconf:true, url:"https://www.instagram.com/tynevalleytap/"},
+  {n:4,   type:"stop",   name:"White Swan",           area:"Ovingham",               lat:54.968534, lng:-1.867247, leg:4.6, cum:23.9, ri:604,  opens:720, url:"https://www.thewhiteswanovingham.co.uk/"},
+  {n:5,   type:"stop",   name:"The Ship Inn",         area:"Wylam",                  lat:54.976062, lng:-1.823602, leg:4.0, cum:27.9, ri:767,  opens:720, unconf:true, url:"https://www.theshipinnwylam.com/"},
+  {n:6,   type:"stop",   name:"Lion & Lamb",          area:"Horsley",                lat:54.988301, lng:-1.855316, leg:3.2, cum:31.1, ri:840,  opens:720, url:"https://www.lionlamb.pub/", note:"The short-but-brutal one, a stiff climb up from the river 😅"},
+  {n:7,   type:"stop",   name:"The Three Tuns Inn",   area:"Heddon-on-the-Wall",     lat:54.997461, lng:-1.793666, leg:6.2, cum:37.3, ri:967,  opens:720, url:"https://thethreetunsinnpub.co.uk/"},
+  {n:8,   type:"finish", name:"The Engine Inn",       area:"Walbottle, the finish", lat:54.994010, lng:-1.738350, leg:5.0, cum:42.3, ri:1107, opens:660, url:"https://www.engineinnwalbottle.co.uk/", note:"🏁 The finish line. You made it; get the round in."}
 ];
+const EVENT_Y=2026, EVENT_M=7, EVENT_D=22;       // 22 August 2026
+const SUNSET_MIN = 20*60+10;                      // ~20:10 BST in the Tyne Valley that evening
 
-/* ---------- Map ---------- */
+/* ================= Helpers ================= */
+const $ = id=>document.getElementById(id);
+function fmt(mins){ // minutes-from-midnight -> "HH:MM"
+  mins = ((Math.round(mins))%1440+1440)%1440;
+  const h = Math.floor(mins/60), m = mins%60;
+  return String(h).padStart(2,'0')+':'+String(m).padStart(2,'0');
+}
+function dur(mins){ const h=Math.floor(mins/60), m=Math.round(mins%60); return h?`${h}h ${m}m`:`${m}m`; }
+function esc(s){ return s.replace(/&/g,'&amp;').replace(/</g,'&lt;'); }
+
+/* Units: 'km' or 'mi' */
+let UNIT = 'km';
+const KM2MI = 0.621371;
+function distStr(km, dp){ // dp = decimals (default 1)
+  if(dp===undefined) dp=1;
+  return UNIT==='km' ? `${(+km).toFixed(dp).replace(/\.0$/,'')} km`
+                     : `${(km*KM2MI).toFixed(dp)} mi`;
+}
+function paceStr(p){ // p = min per km
+  const v = UNIT==='km' ? p : p/KM2MI;
+  const m=Math.floor(v), s=Math.round((v-m)*60);
+  return `${m}:${String(s).padStart(2,'0')} /${UNIT}`;
+}
+
+/* Cumulative distance (km) for every ROUTE point — used by tracking */
+const CUM = [0];
+{
+  const R=6371.0088, rad=Math.PI/180;
+  for(let i=1;i<ROUTE.length;i++){
+    const [a,b]=[ROUTE[i-1],ROUTE[i]];
+    const dLa=(b[0]-a[0])*rad, dLo=(b[1]-a[1])*rad;
+    const h=Math.sin(dLa/2)**2 + Math.cos(a[0]*rad)*Math.cos(b[0]*rad)*Math.sin(dLo/2)**2;
+    CUM.push(CUM[i-1] + 2*R*Math.asin(Math.sqrt(h)));
+  }
+}
+const TOTAL_KM = CUM[CUM.length-1];
+
+/* ================= Map ================= */
 const map = L.map('map', {scrollWheelZoom:false});
 L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
   maxZoom:19, attribution:'© OpenStreetMap contributors © CARTO'
@@ -231,51 +379,50 @@ L.polyline(ROUTE, {color:'#3a2c12', weight:7, opacity:.35}).addTo(map);
 L.polyline(ROUTE, {color:'#d98a1f', weight:4, opacity:1}).addTo(map);
 map.fitBounds(L.latLngBounds(ROUTE), {padding:[36,36]});
 
-STOPS.forEach(s=>{
-  const cls = s.type;
-  const icon = L.divIcon({className:'', html:`<div class="pin ${cls}"><span>${s.n}</span></div>`,
-    iconSize:[30,30], iconAnchor:[15,28], popupAnchor:[0,-28]});
+function popupHTML(s){
   const link = s.url ? `<a class="pop-link" href="${s.url}" target="_blank" rel="noopener">Pub info ↗</a>` : '';
   const meta = s.type==='start'
-    ? `<div class="pop-meta">Start · 0 km</div>`
-    : `<div class="pop-meta">Leg ${s.leg} km · ${s.cum} km total</div>`;
-  L.marker([s.lat,s.lng],{icon}).addTo(map)
-   .bindPopup(`<div class="pop-t">${s.n==='S'?'':'#'+s.n+'  '}${s.name}</div><div class="pop-a">${s.area}</div>${meta}${link}`);
-});
-
-/* ---------- Itinerary cards ---------- */
-const legsEl = document.getElementById('legs');
-STOPS.forEach(s=>{
-  const el = document.createElement('div');
-  el.className = 'leg';
-  const bClass = s.type==='start'?'start':s.type==='finish'?'finish':'';
-  const distChip = s.type==='start' ? '' : `<span class="chip leg-dist">▲ ${s.leg} km leg</span>`;
-  const cumChip  = `<span class="chip">${s.cum} km in</span>`;
-  const timeChip = `<span class="chip time" data-time="${s.n}">—</span>`;
-  const note = s.note ? `<div class="note">${s.note}</div>` : '';
-  const link = s.url ? `<a class="visit" href="${s.url}" target="_blank" rel="noopener">Visit pub site ↗</a>` : '';
-  el.innerHTML = `
-    <div class="badge ${bClass}">${s.n}</div>
-    <div class="leg-body">
-      <h3>${s.name}</h3>
-      <div class="area">${s.area}</div>
-      <div class="chips">${distChip}${cumChip}${timeChip}</div>
-      ${note}${link}
-    </div>`;
-  legsEl.appendChild(el);
-});
-
-/* ---------- Live schedule ---------- */
-const $ = id=>document.getElementById(id);
-function fmt(mins){ // minutes-from-midnight -> "HH:MM"
-  mins = ((Math.round(mins))%1440+1440)%1440;
-  const h = Math.floor(mins/60), m = mins%60;
-  return String(h).padStart(2,'0')+':'+String(m).padStart(2,'0');
+    ? `<div class="pop-meta">Start · ${distStr(0,0)}</div>`
+    : `<div class="pop-meta">Leg ${distStr(s.leg)} · ${distStr(s.cum)} total${s.opens?` · opens ${fmt(s.opens)}${s.unconf?'*':''}`:''}</div>`;
+  return `<div class="pop-t">${s.n==='S'?'':'#'+s.n+'  '}${s.name}</div><div class="pop-a">${s.area}</div>${meta}${link}`;
 }
-function paceStr(p){ const m=Math.floor(p), s=Math.round((p-m)*60); return `${m}:${String(s).padStart(2,'0')} /km`; }
-function dur(mins){ const h=Math.floor(mins/60), m=Math.round(mins%60); return h?`${h}h ${m}m`:`${m}m`; }
+const markers = STOPS.map(s=>{
+  const icon = L.divIcon({className:'', html:`<div class="pin ${s.type}"><span>${s.n}</span></div>`,
+    iconSize:[30,30], iconAnchor:[15,28], popupAnchor:[0,-28]});
+  const m = L.marker([s.lat,s.lng],{icon}).addTo(map).bindPopup(popupHTML(s));
+  m._stop = s;
+  return m;
+});
 
+/* ================= Itinerary cards ================= */
+function renderLegs(){
+  const legsEl = $('legs');
+  legsEl.innerHTML = '';
+  STOPS.forEach(s=>{
+    const el = document.createElement('div');
+    el.className = 'leg';
+    const bClass = s.type==='start'?'start':s.type==='finish'?'finish':'';
+    const distChip = s.type==='start' ? '' : `<span class="chip leg-dist">▲ ${distStr(s.leg)} leg</span>`;
+    const cumChip  = `<span class="chip">${distStr(s.cum)} in</span>`;
+    const timeChip = `<span class="chip time" data-time="${s.n}">—</span>`;
+    const opensChip = s.opens ? `<span class="chip opens">opens ${fmt(s.opens)}${s.unconf?'*':''}</span>` : '';
+    const note = s.note ? `<div class="note">${s.note}</div>` : '';
+    const link = s.url ? `<a class="visit" href="${s.url}" target="_blank" rel="noopener">Visit pub site ↗</a>` : '';
+    el.innerHTML = `
+      <div class="badge ${bClass}">${s.n}</div>
+      <div class="leg-body">
+        <h3>${s.name}</h3>
+        <div class="area">${s.area}</div>
+        <div class="chips">${distChip}${cumChip}${timeChip}${opensChip}</div>
+        ${note}${link}
+      </div>`;
+    legsEl.appendChild(el);
+  });
+}
+
+/* ================= Live schedule + warnings ================= */
 function recompute(){
+  if(!$('startTime').value) return;           // ignore a cleared time input
   const [h,m] = $('startTime').value.split(':').map(Number);
   const start = h*60+m;
   const pace = parseFloat($('pace').value);      // min per km
@@ -285,14 +432,22 @@ function recompute(){
   $('paceVal').textContent  = paceStr(pace);
   $('stopVal').textContent  = dwell+' min';
 
+  const warns = [];
   let t = start, runMin = 0;
   STOPS.forEach((s,i)=>{
     if(i>0){ const legMin = s.leg*pace; t += legMin; runMin += legMin; }
+    s._arr = t;
     const chip = document.querySelector(`[data-time="${s.n}"]`);
+    chip.classList.remove('warn');
     if(s.type==='start'){ chip.textContent = 'Depart '+fmt(t); }
     else if(s.type==='finish'){ chip.textContent = 'Arrive '+fmt(t); }
     else { chip.textContent = fmt(t)+' – '+fmt(t+dwell); }
+    if(s.opens && t < s.opens){
+      chip.classList.add('warn');
+      warns.push(`🚪 You'd reach <b>${s.name}</b> at ${fmt(t)}, before it opens at ${fmt(s.opens)}${s.unconf?'*':''} — you'd be waiting ${Math.round(s.opens-t)} min.`);
+    }
     if(i>0 && s.type!=='finish') t += dwell; // drink time (not added after final pub)
+    s._dep = s.type==='finish' ? t : (i===0 ? start : t);
   });
 
   const totalMin = t - start;
@@ -300,9 +455,237 @@ function recompute(){
   $('sumFinish').textContent = fmt(t);
   $('sumTotal').textContent  = dur(totalMin);
   $('sumRun').textContent    = dur(runMin);
+
+  if(t > SUNSET_MIN) warns.push(`🌇 You'd finish at ${fmt(t)} — after sunset (~${fmt(SUNSET_MIN)}). Pack lights and hi-vis for the last leg.`);
+  $('warnings').innerHTML = warns.map(w=>`<div class="warn">${w}</div>`).join('');
+
+  savePlan();
 }
+
+/* ---- Shareable, persistent plan settings ---- */
+const DEFAULTS = {start:'11:00', pace:'6.5', pub:'25'};
+function savePlan(){
+  const plan = {start:$('startTime').value, pace:$('pace').value, pub:$('stopMins').value};
+  try{ localStorage.setItem('bm-plan', JSON.stringify(plan)); localStorage.setItem('bm-unit', UNIT); }catch(e){}
+  const q = new URLSearchParams();
+  if(plan.start!==DEFAULTS.start) q.set('start', plan.start);
+  if(plan.pace !==DEFAULTS.pace)  q.set('pace',  plan.pace);
+  if(plan.pub  !==DEFAULTS.pub)   q.set('pub',   plan.pub);
+  if(UNIT!=='km') q.set('u', UNIT);
+  history.replaceState(null,'', location.pathname + (q.toString()?'?'+q.toString():''));
+}
+function loadPlan(){
+  let plan = {};
+  try{ plan = JSON.parse(localStorage.getItem('bm-plan')||'{}')||{}; UNIT = localStorage.getItem('bm-unit')||UNIT; }catch(e){}
+  const q = new URLSearchParams(location.search);
+  if(q.get('start')) plan.start = q.get('start');
+  if(q.get('pace'))  plan.pace  = q.get('pace');
+  if(q.get('pub'))   plan.pub   = q.get('pub');
+  if(q.get('u')==='mi') UNIT='mi';
+  if(/^\d{2}:\d{2}$/.test(plan.start||'')) $('startTime').value = plan.start;
+  const pc = parseFloat(plan.pace); if(pc>=5 && pc<=12)  $('pace').value = pc;
+  const pb = parseInt(plan.pub,10); if(pb>=10 && pb<=45) $('stopMins').value = pb;
+}
+
+$('shareBtn').addEventListener('click', async ()=>{
+  try{
+    await navigator.clipboard.writeText(location.href);
+    $('shareBtn').textContent = '✓ Link copied';
+  }catch(e){ $('shareBtn').textContent = location.href; }
+  setTimeout(()=>{ $('shareBtn').textContent = '🔗 Copy link to this plan'; }, 2500);
+});
+
+/* ---- Units toggle ---- */
+document.querySelectorAll('.unit-toggle button').forEach(b=>{
+  b.addEventListener('click', ()=>{
+    if(b.dataset.u===UNIT) return;
+    UNIT = b.dataset.u;
+    document.querySelectorAll('.unit-toggle button').forEach(x=>x.classList.toggle('on', x.dataset.u===UNIT));
+    renderLegs(); recompute(); drawElev();
+    markers.forEach(m=>m.setPopupContent(popupHTML(m._stop)));
+  });
+});
+
+/* ================= Elevation profile ================= */
+function drawElev(){
+  if(!window.ELEV || !ELEV.length){ $('elevBox').style.display='none'; return; }
+  const box = $('elevChart');
+  const W = box.clientWidth || 900, H = W<520 ? 170 : 215;
+  const padL=42, padR=12, padT=26, padB=20;
+  const total = ELEV[ELEV.length-1][0];
+  let e0=Infinity, e1=-Infinity;
+  ELEV.forEach(p=>{ if(p[1]<e0)e0=p[1]; if(p[1]>e1)e1=p[1]; });
+  e0 = Math.floor(e0/50)*50; e1 = Math.ceil(e1/50)*50;
+  const X = d => padL + (d/total)*(W-padL-padR);
+  const Y = e => padT + (1-(e-e0)/(e1-e0))*(H-padT-padB);
+
+  let line = '';
+  ELEV.forEach((p,i)=>{ line += (i?'L':'M') + X(p[0]).toFixed(1) + ' ' + Y(p[1]).toFixed(1) + ' '; });
+  const area = line + `L${X(total).toFixed(1)} ${Y(e0)} L${X(0).toFixed(1)} ${Y(e0)} Z`;
+
+  let grid = '';
+  for(let v=e0; v<=e1; v+=50){
+    grid += `<line x1="${padL}" y1="${Y(v)}" x2="${W-padR}" y2="${Y(v)}" stroke="var(--line)" stroke-width="1"/>`+
+            `<text x="${padL-6}" y="${Y(v)+4}" text-anchor="end" font-size="11" fill="var(--muted)">${v}m</text>`;
+  }
+  const step = UNIT==='km' ? 10 : 16.0934/2; // label every 10 km / 5 mi
+  for(let d=step; d<total; d+=step){
+    grid += `<text x="${X(d)}" y="${H-4}" text-anchor="middle" font-size="11" fill="var(--muted)">${UNIT==='km'?d:Math.round(d*KM2MI)}</text>`;
+  }
+  grid += `<text x="${W-padR}" y="${H-4}" text-anchor="end" font-size="11" fill="var(--muted)">${distStr(total)}</text>`;
+
+  let pins = '';
+  STOPS.forEach(s=>{
+    const d = CUM[s.ri];
+    let e = ELEV[0][1];
+    for(const p of ELEV){ if(p[0]<=d) e=p[1]; else break; }
+    const col = s.type==='start' ? 'var(--green)' : s.type==='finish' ? 'var(--red)' : 'var(--amber)';
+    pins += `<line x1="${X(d)}" y1="${Y(e)}" x2="${X(d)}" y2="${padT-6}" stroke="${col}" stroke-width="1" stroke-dasharray="2 3" opacity=".7"/>`+
+            `<circle cx="${X(d)}" cy="${padT-12}" r="9" fill="${col}" stroke="#fff" stroke-width="1.5"/>`+
+            `<text x="${X(d)}" y="${padT-8.5}" text-anchor="middle" font-size="10" font-weight="700" fill="#fff">${s.n}</text>`;
+  });
+
+  box.innerHTML =
+    `<svg width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" role="img" aria-label="Elevation profile of the route">
+      <defs><linearGradient id="eg" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0" stop-color="#d98a1f" stop-opacity=".45"/>
+        <stop offset="1" stop-color="#d98a1f" stop-opacity=".05"/>
+      </linearGradient></defs>
+      ${grid}
+      <path d="${area}" fill="url(#eg)"/>
+      <path d="${line}" fill="none" stroke="var(--amber-deep)" stroke-width="2"/>
+      ${pins}
+    </svg>`;
+}
+let _rt; window.addEventListener('resize', ()=>{ clearTimeout(_rt); _rt=setTimeout(drawElev,150); });
+
+/* ================= Downloads: GPX + calendar ================= */
+function download(name, text, mime){
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([text], {type:mime}));
+  a.download = name;
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(()=>URL.revokeObjectURL(a.href), 5000);
+}
+$('gpxBtn').addEventListener('click', ()=>{
+  const wpts = STOPS.map(s=>
+    `  <wpt lat="${s.lat}" lon="${s.lng}"><name>${esc((s.n==='S'?'Start: ':s.type==='finish'?'Finish: ':'#'+s.n+' ')+s.name)}</name><desc>${esc(s.area)}</desc></wpt>`).join('\n');
+  const pts = ROUTE.map(p=>`<trkpt lat="${p[0]}" lon="${p[1]}"/>`).join('');
+  const gpx = `<?xml version="1.0" encoding="UTF-8"?>
+<gpx version="1.1" creator="beermarathon.run" xmlns="http://www.topografix.com/GPX/1/1">
+  <metadata><name>Beer Marathon — Hexham to Walbottle</name><time>${EVENT_Y}-08-22T10:00:00Z</time></metadata>
+${wpts}
+  <trk><name>Beer Marathon 42.3 km</name><trkseg>${pts}</trkseg></trk>
+</gpx>`;
+  download('beer-marathon.gpx', gpx, 'application/gpx+xml');
+});
+$('icsBtn').addEventListener('click', ()=>{
+  const ics = ['BEGIN:VCALENDAR','VERSION:2.0','PRODID:-//beermarathon.run//EN','BEGIN:VEVENT',
+    'UID:beer-marathon-2026@beermarathon.run','DTSTAMP:20260719T120000Z',
+    'DTSTART:20260822T100000Z','DTEND:20260822T190000Z',              // 11:00–20:00 BST
+    'SUMMARY:Beer Marathon 🍺 Hexham → Walbottle',
+    'DESCRIPTION:42.3 km\\, 8 pubs. Route and plan: https://beermarathon.run',
+    'LOCATION:Hexham Railway Station','URL:https://beermarathon.run',
+    'BEGIN:VALARM','TRIGGER:-P1D','ACTION:DISPLAY','DESCRIPTION:Beer Marathon tomorrow — carb up 🍝','END:VALARM',
+    'END:VEVENT','END:VCALENDAR'].join('\r\n');
+  download('beer-marathon.ics', ics, 'text/calendar');
+});
+
+/* ================= On-the-day tracking ================= */
+let watchId = null, meMarker = null;
+function nearestOnRoute(lat, lng){
+  const rad=Math.PI/180, ky=110.574, kx=111.32*Math.cos(lat*rad); // km per degree
+  let bi=0, bd=Infinity;
+  for(let i=0;i<ROUTE.length;i++){
+    const dy=(ROUTE[i][0]-lat)*ky, dx=(ROUTE[i][1]-lng)*kx, d=dy*dy+dx*dx;
+    if(d<bd){ bd=d; bi=i; }
+  }
+  return {i:bi, off:Math.sqrt(bd)};
+}
+function plannedMinAt(dKm){ // planned clock time (min) at a distance along the route
+  if(dKm<=0) return STOPS[0]._dep;
+  for(let i=1;i<STOPS.length;i++){
+    const a=STOPS[i-1], b=STOPS[i], da=CUM[a.ri], db=CUM[b.ri];
+    if(dKm<=db) return a._dep + (dKm-da)/(db-da)*(b._arr-a._dep);
+  }
+  return STOPS[STOPS.length-1]._arr;
+}
+function onFix(pos){
+  const {latitude:lat, longitude:lng, accuracy} = pos.coords;
+  if(!meMarker){
+    meMarker = L.marker([lat,lng], {icon:L.divIcon({className:'', html:'<div class="me-dot"></div>', iconSize:[18,18], iconAnchor:[9,9]}), zIndexOffset:1000}).addTo(map);
+    map.setView([lat,lng], 14);
+  } else meMarker.setLatLng([lat,lng]);
+
+  const near = nearestOnRoute(lat,lng);
+  const now = new Date(), nowMin = now.getHours()*60 + now.getMinutes() + now.getSeconds()/60;
+  $('trkNote').textContent = `GPS accuracy ±${Math.round(accuracy)} m · updated ${now.toLocaleTimeString()}`;
+
+  if(near.off > 0.5){
+    $('trkStatus').textContent = `You're ${distStr(near.off)} from the route — head for the amber line!`;
+    $('trkDone').textContent = $('trkLeft').textContent = $('trkNext').textContent = $('trkPlan').textContent = '—';
+    return;
+  }
+  $('trkStatus').textContent = 'On the route 🍺🏃';
+  const done = CUM[near.i];
+  $('trkDone').textContent = distStr(done);
+  $('trkLeft').textContent = distStr(TOTAL_KM-done);
+
+  const next = STOPS.find(s=>CUM[s.ri] > done+0.05);
+  if(next){
+    const toGo = CUM[next.ri]-done;
+    const eta = nowMin + toGo*parseFloat($('pace').value);
+    let s = `${next.n==='S'?'':'#'+next.n+' '}${next.name} · ${distStr(toGo)} (~${fmt(eta)})`;
+    if(next.opens && eta < next.opens) s += ` ⚠ opens ${fmt(next.opens)}`;
+    $('trkNext').textContent = s;
+  } else $('trkNext').textContent = "🏁 You're at the finish!";
+
+  const delta = nowMin - plannedMinAt(done);
+  $('trkPlan').textContent = Math.abs(delta)<4 ? '≈ on schedule ✓'
+    : delta<0 ? `${Math.round(-delta)} min ahead` : `${Math.round(delta)} min behind`;
+}
+function onFixErr(err){
+  $('trkStatus').textContent = err.code===1
+    ? 'Location permission denied — allow location access to track your run.'
+    : 'No GPS fix yet… (' + err.message + ')';
+}
+$('trackBtn').addEventListener('click', ()=>{
+  if(watchId!==null){
+    navigator.geolocation.clearWatch(watchId); watchId=null;
+    if(meMarker){ map.removeLayer(meMarker); meMarker=null; }
+    $('trackPanel').classList.remove('on');
+    $('trackBtn').textContent = '📍 On the day: track me';
+    return;
+  }
+  if(!('geolocation' in navigator)){
+    $('trackPanel').classList.add('on');
+    $('trkStatus').textContent = 'This browser has no geolocation support.';
+    return;
+  }
+  $('trackPanel').classList.add('on');
+  $('trkStatus').textContent = 'Waiting for GPS…';
+  $('trackBtn').textContent = '⏹ Stop tracking';
+  watchId = navigator.geolocation.watchPosition(onFix, onFixErr, {enableHighAccuracy:true, maximumAge:5000, timeout:20000});
+});
+
+/* ================= Countdown ================= */
+{
+  const today = new Date(); today.setHours(0,0,0,0);
+  const days = Math.round((new Date(EVENT_Y,EVENT_M,EVENT_D) - today)/864e5);
+  $('countdown').textContent =
+    days>1  ? `⏳ ${days} days to go` :
+    days===1? '⏳ Tomorrow. Hydrate.' :
+    days===0? "🍺 It's today — good luck out there!" :
+              'That was it for 2026 — see you at the next one 🍻';
+}
+
+/* ================= Init ================= */
+loadPlan();
+document.querySelectorAll('.unit-toggle button').forEach(x=>x.classList.toggle('on', x.dataset.u===UNIT));
+renderLegs();
 ['startTime','pace','stopMins'].forEach(id=>$(id).addEventListener('input',recompute));
 recompute();
+drawElev();
 </script>
 </body>
 </html>
