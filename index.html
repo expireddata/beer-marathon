@@ -11,7 +11,7 @@
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
       integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="">
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
-        integrity="sha256-20nQCchB9co0qIjJ/qw3W4y5wf/U8HN5aB/e6O4uPvo=" crossorigin=""></script>
+        integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -135,7 +135,7 @@
   <header class="hero">
     <span class="kicker">Tyne Valley · 8 Pubs · 1 Very Long Afternoon</span>
     <h1>Beer <span class="beer">🍺</span> Marathon</h1>
-    <p class="tagline">42.2&nbsp;km on foot from Hexham to Walbottle, pausing for a pint at eight pubs along the way. Here's the route — and the plan.</p>
+    <p class="tagline">42.2&nbsp;km on foot from Hexham to Walbottle, pausing for a pint at eight pubs along the way. Here's the route, and the plan.</p>
     <div class="date-badge">📅 Saturday 22 August 2026</div>
 
     <div class="stats">
@@ -157,13 +157,13 @@
   <section id="plan">
     <div class="sec-head">
       <h2>Plan your day</h2>
-      <span class="hint">Set a start time and pace — the schedule updates live</span>
+      <span class="hint">Set a start time and pace; the schedule updates live</span>
     </div>
     <div class="planner">
       <div class="controls">
         <div class="ctrl">
           <label>Start time <b id="startVal"></b></label>
-          <input id="startTime" type="time" value="09:00">
+          <input id="startTime" type="time" value="11:00">
         </div>
         <div class="ctrl">
           <label>Running pace <b id="paceVal"></b></label>
@@ -193,7 +193,7 @@
 
   <section>
     <div class="callout">
-      <b>How it works.</b> Start at Hexham railway station and run the Tyne Valley eastward, stopping at each pub for a pint before pressing on. The legs get shorter in the middle and there's a cheeky climb up to Horsley — the shortest leg on paper (3&nbsp;km) but the one that'll hurt&nbsp;😅. Finish line is a well-earned pint at The Engine Inn, Walbottle. Sensible drinking, sensible shoes, and a plan for getting home afterwards!
+      <b>How it works.</b> Start at Hexham railway station and run the Tyne Valley eastward, stopping at each pub for a pint before pressing on. The pubs don't open until around midday, so the default 11:00 start brings you to the first stop, The Pele in Corbridge, just as the doors open. The legs get shorter in the middle and there's a cheeky climb up to Horsley, the shortest leg on paper (3&nbsp;km) but the one that'll hurt&nbsp;😅. Finish line is a well-earned pint at The Engine Inn, Walbottle. Sensible drinking, sensible shoes, and a plan for getting home afterwards!
     </div>
   </section>
 
@@ -209,15 +209,15 @@
 <script>
 /* ---- Stops: from Hexham station east to Walbottle. cum = distance from start (km). ---- */
 const STOPS = [
-  {n:"S", type:"start",  name:"Hexham Railway Station", area:"Hexham — the start line", lat:54.97308, lng:-2.09511, leg:0,   cum:0,    url:null},
+  {n:"S", type:"start",  name:"Hexham Railway Station", area:"Hexham, the start line", lat:54.97308, lng:-2.09511, leg:0,   cum:0,    url:null},
   {n:1,   type:"stop",   name:"The Pele",             area:"Corbridge",              lat:54.974233, lng:-2.019478, leg:8.0, cum:8.0,  url:"https://www.thepele.co.uk/"},
   {n:2,   type:"stop",   name:"The Wellington",       area:"Riding Mill",            lat:54.947651, lng:-1.972883, leg:5.3, cum:13.3, url:"https://www.chefandbrewer.com/pubs/northumberland/wellington-hotel"},
   {n:3,   type:"stop",   name:"Tyne Valley Taproom",  area:"Stocksfield",            lat:54.950624, lng:-1.917200, leg:5.9, cum:19.2, url:"https://www.instagram.com/tynevalleytap/"},
   {n:4,   type:"stop",   name:"White Swan",           area:"Ovingham",               lat:54.968534, lng:-1.867247, leg:4.5, cum:23.7, url:"https://www.thewhiteswanovingham.co.uk/"},
   {n:5,   type:"stop",   name:"The Ship Inn",         area:"Wylam",                  lat:54.976062, lng:-1.823602, leg:4.0, cum:27.7, url:"https://www.theshipinnwylam.com/dev1/bar"},
-  {n:6,   type:"stop",   name:"Lion & Lamb",          area:"Horsley",                lat:54.988301, lng:-1.855316, leg:3.0, cum:30.7, url:"https://www.lionlamb.pub/", note:"The short-but-brutal one — a stiff climb up from the river 😅"},
+  {n:6,   type:"stop",   name:"Lion & Lamb",          area:"Horsley",                lat:54.988301, lng:-1.855316, leg:3.0, cum:30.7, url:"https://www.lionlamb.pub/", note:"The short-but-brutal one, a stiff climb up from the river 😅"},
   {n:7,   type:"stop",   name:"The Three Tuns Inn",   area:"Heddon-on-the-Wall",     lat:54.997461, lng:-1.793666, leg:6.2, cum:36.9, url:"https://thethreetunsinnpub.co.uk/"},
-  {n:8,   type:"finish", name:"The Engine Inn",       area:"Walbottle — the finish", lat:54.994010, lng:-1.738350, leg:5.0, cum:41.9, url:"https://www.engineinnwalbottle.co.uk/", note:"🏁 The finish line. You made it — get the round in."}
+  {n:8,   type:"finish", name:"The Engine Inn",       area:"Walbottle, the finish", lat:54.994010, lng:-1.738350, leg:5.0, cum:41.9, url:"https://www.engineinnwalbottle.co.uk/", note:"🏁 The finish line. You made it; get the round in."}
 ];
 
 /* ---------- Map ---------- */
