@@ -164,6 +164,7 @@
   .chip.time.warn{background:var(--red); color:#fff; border-color:var(--red)}
   .chip.leg-dist{background:#eef5e8; color:var(--green); border-color:#d5e6c6}
   .chip.opens{background:transparent; color:var(--muted)}
+  .chip.closes{background:#fdecec; color:var(--red); border-color:#f4cfcf}
   .note{font-size:14px; color:var(--muted); font-style:italic; margin:6px 0 8px}
   .visit{display:inline-flex; align-items:center; gap:6px; text-decoration:none; font-weight:600; font-size:14px;
     color:var(--amber-deep)}
@@ -294,7 +295,7 @@
       <span class="hint">Eight stops, roughly 5 km apart</span>
     </div>
     <div class="legs" id="legs"></div>
-    <p class="foot-note">* Opening hours unconfirmed — worth checking nearer the day.</p>
+    <p class="foot-note">* From third-party listings (e.g. CAMRA), not the pub's own website — worth a quick double-check nearer the day. White Swan &amp; Three Tuns hours are from the pubs' own sites.</p>
   </section>
 
   <section>
@@ -316,17 +317,23 @@
 /* ================= Data ================= */
 /* Legs recomputed from the GPS track (haversine); they sum to the 42.3 km total.
    ri = index of the stop's nearest point in ROUTE (used for live tracking).
-   opens = Saturday opening time in minutes from midnight; unconf = hours not verified. */
+   opens/closes = Saturday hours in minutes from midnight.
+   unconf/cunf = open/close time NOT confirmed from the pub's own website (it came from a
+   third-party listing such as CAMRA, or the sources conflict) — see footnote. White Swan
+   and Three Tuns hours are from the pubs' own sites; the rest are third-party and best
+   double-checked nearer the day. For the later pubs the closing time matters far more
+   than the opening time: they'll long since be open by the time a runner arrives, so the
+   warning to watch is "will it still be serving?". */
 const STOPS = [
-  {n:"S", type:"start",  name:"Hexham Railway Station", area:"Hexham, the start line", lat:54.97308, lng:-2.09511, leg:0,   cum:0,    ri:0,    opens:null, url:null},
-  {n:1,   type:"stop",   name:"The Pele",             area:"Corbridge",              lat:54.974233, lng:-2.019478, leg:8.2, cum:8.2,  ri:201,  opens:660, url:"https://www.thepele.co.uk/"},
-  {n:2,   type:"stop",   name:"The Wellington",       area:"Riding Mill",            lat:54.947651, lng:-1.972883, leg:5.2, cum:13.4, ri:333,  opens:660, url:"https://www.chefandbrewer.com/pubs/northumberland/wellington-hotel"},
-  {n:3,   type:"stop",   name:"Tyne Valley Taproom",  area:"Stocksfield",            lat:54.950624, lng:-1.917200, leg:5.9, cum:19.3, ri:493,  opens:720, unconf:true, url:"https://www.instagram.com/tynevalleytap/"},
-  {n:4,   type:"stop",   name:"White Swan",           area:"Ovingham",               lat:54.968534, lng:-1.867247, leg:4.6, cum:23.9, ri:604,  opens:720, url:"https://www.thewhiteswanovingham.co.uk/"},
-  {n:5,   type:"stop",   name:"The Ship Inn",         area:"Wylam",                  lat:54.976062, lng:-1.823602, leg:4.0, cum:27.9, ri:767,  opens:720, unconf:true, url:"https://www.theshipinnwylam.com/"},
-  {n:6,   type:"stop",   name:"Lion & Lamb",          area:"Horsley",                lat:54.988301, lng:-1.855316, leg:3.2, cum:31.1, ri:840,  opens:720, url:"https://www.lionlamb.pub/", note:"The short-but-brutal one, a stiff climb up from the river 😅"},
-  {n:7,   type:"stop",   name:"The Three Tuns Inn",   area:"Heddon-on-the-Wall",     lat:54.997461, lng:-1.793666, leg:6.2, cum:37.3, ri:967,  opens:720, url:"https://thethreetunsinnpub.co.uk/"},
-  {n:8,   type:"finish", name:"The Engine Inn",       area:"Walbottle, the finish", lat:54.994010, lng:-1.738350, leg:5.0, cum:42.3, ri:1107, opens:660, url:"https://www.engineinnwalbottle.co.uk/", note:"🏁 The finish line. You made it; get the round in."}
+  {n:"S", type:"start",  name:"Hexham Railway Station", area:"Hexham, the start line", lat:54.97308, lng:-2.09511, leg:0,   cum:0,    ri:0,    opens:null, closes:null, url:null},
+  {n:1,   type:"stop",   name:"The Pele",             area:"Corbridge",              lat:54.974233, lng:-2.019478, leg:8.2, cum:8.2,  ri:201,  opens:660, closes:1380, unconf:true, cunf:true, url:"https://www.thepele.co.uk/"},
+  {n:2,   type:"stop",   name:"The Wellington",       area:"Riding Mill",            lat:54.947651, lng:-1.972883, leg:5.2, cum:13.4, ri:333,  opens:660, closes:1380, unconf:true, cunf:true, url:"https://www.chefandbrewer.com/pubs/northumberland/wellington-hotel"},
+  {n:3,   type:"stop",   name:"Tyne Valley Taproom",  area:"Stocksfield",            lat:54.950624, lng:-1.917200, leg:5.9, cum:19.3, ri:493,  opens:600, closes:1470, unconf:true, cunf:true, url:"https://www.instagram.com/tynevalleytap/"},
+  {n:4,   type:"stop",   name:"White Swan",           area:"Ovingham",               lat:54.968534, lng:-1.867247, leg:4.6, cum:23.9, ri:604,  opens:720, closes:1380, url:"https://www.thewhiteswanovingham.co.uk/"},
+  {n:5,   type:"stop",   name:"The Ship Inn",         area:"Wylam",                  lat:54.976062, lng:-1.823602, leg:4.0, cum:27.9, ri:767,  opens:720, closes:1380, unconf:true, cunf:true, url:"https://www.theshipinnwylam.com/"},
+  {n:6,   type:"stop",   name:"Lion & Lamb",          area:"Horsley",                lat:54.988301, lng:-1.855316, leg:3.2, cum:31.1, ri:840,  opens:720, closes:1320, unconf:true, cunf:true, url:"https://www.lionlamb.pub/", note:"The short-but-brutal one, a stiff climb up from the river 😅"},
+  {n:7,   type:"stop",   name:"The Three Tuns Inn",   area:"Heddon-on-the-Wall",     lat:54.997461, lng:-1.793666, leg:6.2, cum:37.3, ri:967,  opens:720, closes:1380, url:"https://thethreetunsinnpub.co.uk/"},
+  {n:8,   type:"finish", name:"The Engine Inn",       area:"Walbottle, the finish", lat:54.994010, lng:-1.738350, leg:5.0, cum:42.3, ri:1107, opens:660, closes:1380, unconf:true, cunf:true, url:"https://www.engineinnwalbottle.co.uk/", note:"🏁 The finish line. You made it; get the round in."}
 ];
 const EVENT_Y=2026, EVENT_M=7, EVENT_D=22;       // 22 August 2026
 const SUNSET_MIN = 20*60+10;                      // ~20:10 BST in the Tyne Valley that evening
@@ -383,7 +390,7 @@ function popupHTML(s){
   const link = s.url ? `<a class="pop-link" href="${s.url}" target="_blank" rel="noopener">Pub info ↗</a>` : '';
   const meta = s.type==='start'
     ? `<div class="pop-meta">Start · ${distStr(0,0)}</div>`
-    : `<div class="pop-meta">Leg ${distStr(s.leg)} · ${distStr(s.cum)} total${s.opens?` · opens ${fmt(s.opens)}${s.unconf?'*':''}`:''}</div>`;
+    : `<div class="pop-meta">Leg ${distStr(s.leg)} · ${distStr(s.cum)} total${s.opens?` · opens ${fmt(s.opens)}${s.unconf?'*':''}`:''}${s.closes?` · til ${fmt(s.closes)}${s.cunf?'*':''}`:''}</div>`;
   return `<div class="pop-t">${s.n==='S'?'':'#'+s.n+'  '}${s.name}</div><div class="pop-a">${s.area}</div>${meta}${link}`;
 }
 const markers = STOPS.map(s=>{
@@ -406,6 +413,7 @@ function renderLegs(){
     const cumChip  = `<span class="chip">${distStr(s.cum)} in</span>`;
     const timeChip = `<span class="chip time" data-time="${s.n}">—</span>`;
     const opensChip = s.opens ? `<span class="chip opens">opens ${fmt(s.opens)}${s.unconf?'*':''}</span>` : '';
+    const closesChip = s.closes ? `<span class="chip closes">til ${fmt(s.closes)}${s.cunf?'*':''}</span>` : '';
     const note = s.note ? `<div class="note">${s.note}</div>` : '';
     const link = s.url ? `<a class="visit" href="${s.url}" target="_blank" rel="noopener">Visit pub site ↗</a>` : '';
     el.innerHTML = `
@@ -413,7 +421,7 @@ function renderLegs(){
       <div class="leg-body">
         <h3>${s.name}</h3>
         <div class="area">${s.area}</div>
-        <div class="chips">${distChip}${cumChip}${timeChip}${opensChip}</div>
+        <div class="chips">${distChip}${cumChip}${timeChip}${opensChip}${closesChip}</div>
         ${note}${link}
       </div>`;
     legsEl.appendChild(el);
@@ -445,6 +453,16 @@ function recompute(){
     if(s.opens && t < s.opens){
       chip.classList.add('warn');
       warns.push(`🚪 You'd reach <b>${s.name}</b> at ${fmt(t)}, before it opens at ${fmt(s.opens)}${s.unconf?'*':''} — you'd be waiting ${Math.round(s.opens-t)} min.`);
+    }
+    if(s.closes){
+      const leave = s.type==='finish' ? t : t+dwell;   // when you'd want to still be served
+      if(t >= s.closes){
+        chip.classList.add('warn');
+        warns.push(`🔒 You'd reach <b>${s.name}</b> at ${fmt(t)}, after it closes at ${fmt(s.closes)}${s.cunf?'*':''} — it'd be shut. Push the pace or trim earlier stops.`);
+      } else if(leave > s.closes){
+        chip.classList.add('warn');
+        warns.push(`⏰ You'd get to <b>${s.name}</b> at ${fmt(t)} with only ${Math.round(s.closes-t)} min before it closes at ${fmt(s.closes)}${s.cunf?'*':''} — cut it fine and you'll miss last orders.`);
+      }
     }
     if(i>0 && s.type!=='finish') t += dwell; // drink time (not added after final pub)
     s._dep = s.type==='finish' ? t : (i===0 ? start : t);
@@ -637,6 +655,7 @@ function onFix(pos){
     const eta = nowMin + toGo*parseFloat($('pace').value);
     let s = `${next.n==='S'?'':'#'+next.n+' '}${next.name} · ${distStr(toGo)} (~${fmt(eta)})`;
     if(next.opens && eta < next.opens) s += ` ⚠ opens ${fmt(next.opens)}`;
+    if(next.closes && eta >= next.closes) s += ` 🔒 shut ${fmt(next.closes)}`;
     $('trkNext').textContent = s;
   } else $('trkNext').textContent = "🏁 You're at the finish!";
 
